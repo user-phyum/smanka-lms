@@ -1291,13 +1291,19 @@
             const custom = localStorage.getItem('lmssmanka_firebase_config');
             if (custom) {
                 try {
-                    config = JSON.parse(custom);
+                    const parsed = JSON.parse(custom);
+                    if (parsed && parsed.projectId && parsed.apiKey) {
+                        config = parsed;
+                    }
                 } catch(e){}
             }
 
             if (!config && typeof __firebase_config !== 'undefined' && __firebase_config) {
                 try {
-                    config = JSON.parse(__firebase_config);
+                    const parsed = JSON.parse(__firebase_config);
+                    if (parsed && parsed.projectId && parsed.apiKey) {
+                        config = parsed;
+                    }
                 } catch(e){}
             }
 
@@ -1429,7 +1435,7 @@
                 }
 
                 const docRef = getCourseDocRef();
-                if (docRef && auth?.currentUser) {
+                if (docRef) {
                     await setDoc(docRef, payload, { merge: true });
                     if (syncIcon && syncText) {
                         syncIcon.className = "fa-solid fa-cloud-check text-green-400";
@@ -1475,12 +1481,20 @@
                     : getFirestore(app);
 
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch(aErr) {
+                        console.warn("Custom token auth warning:", aErr);
+                    }
                 } else {
-                    await signInAnonymously(auth);
+                    try {
+                        await signInAnonymously(auth);
+                    } catch(aErr) {
+                        console.warn("Anonymous auth warning:", aErr);
+                    }
                 }
 
-                window.state.currentUserId = auth.currentUser?.uid || 'anon-user';
+                window.state.currentUserId = auth?.currentUser?.uid || 'anon-user';
 
                 const docRef = getCourseDocRef();
                 if (docRef) {
@@ -1522,7 +1536,10 @@
                         }
                     }, (error) => {
                         console.warn("Firestore Listener Warning:", error);
-                        loadFromLocalStorageFallback();
+                        if (syncIcon && syncText) {
+                            syncIcon.className = "fa-solid fa-floppy-disk text-amber-300";
+                            syncText.textContent = "Simpan Lokal";
+                        }
                     });
                 } else {
                     loadFromLocalStorageFallback();
