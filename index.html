@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS SMANKA - Manajemen Kelas Virtual</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        moodle: {
+                            blue: '#0f6cbf',
+                            darkblue: '#094478',
+                            lightblue: '#e7f1ff',
+                            orange: '#f89406',
+                            gray: '#f4f5f7',
+                            card: '#ffffff',
+                            border: '#dee2e6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f5f7;
+            color: #333333;
+        }
+        .moodle-gradient {
+            background: linear-gradient(135deg, #0f6cbf 0%, #084072 100%);
+        }
+        .activity-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .activity-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        .section-hidden {
+            opacity: 0.70;
+            background-color: #f8fafc;
+            border-style: dashed !important;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="moodle-gradient text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Left: Logo & Web Title -->
+                <div class="flex items-center space-x-3">
+                    <img src="https://img.magnific.com/premium-vector/flat-web-template-with-lms-concept-design-concept-learning-management-system_100456-11222.jpg?semt=ais_hybrid&w=740&q=80" 
+                         alt="LMS SMANKA Logo" 
+                         class="h-10 w-10 object-cover rounded-lg border border-white/30 shadow-sm"
+                         onerror="this.onerror=null; this.src='https://placehold.co/100x100/0f6cbf/ffffff?text=LMS';">
+                    <div>
+                        <span class="font-bold text-lg tracking-wide">
+                            LMS SMANKA
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <!-- Cloud Sync Indicator -->
+                    <button onclick="openFirebaseConfigModal()" id="sync-status" class="flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full text-blue-100 transition cursor-pointer" title="Klik untuk Pengaturan Firebase Cloud">
+                        <i class="fa-solid fa-cloud-check text-green-400" id="sync-icon"></i>
+                        <span id="sync-text">Tersinkron Cloud</span>
+                    </button>
+
+                    <!-- Role Badge -->
+                    <div id="user-role-badge" class="bg-blue-900/60 border border-blue-400/30 px-3 py-1 rounded-full text-xs flex items-center gap-2">
+                        <span id="role-icon" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="role-text" class="font-medium text-blue-100">Mode Siswa</span>
+                    </div>
+
+                    <!-- Admin Auth Button -->
+                    <button id="admin-auth-btn" onclick="openAdminModal()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span id="admin-btn-text">Login Pengajar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Course Header Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <!-- Editable Course Code Tag -->
+                        <span id="course-display-code" class="bg-moodle-lightblue text-moodle-blue text-xs font-bold px-2.5 py-0.5 rounded border border-blue-200">TIF-2026</span>
+                        <span id="last-updated-tag" class="text-xs text-slate-400">Pembaruan Otomatis</span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2" id="course-display-title">
+                        Pemrograman Web Lanjut & LMS Architecture
+                    </h1>
+                    <p class="text-sm text-slate-600" id="course-display-desc">
+                        Kelas interaktif penguasaan modul web, manajemen aktivitas, dan struktur pembelajaran e-learning berbasis Moodle.
+                    </p>
+                    <div class="flex items-center gap-4 text-xs text-slate-500 pt-2">
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-user-tie text-moodle-blue"></i> Pengajar: <strong id="course-teacher-name">Dr. Ir. Ahmad Subagyo, M.Kom</strong></span>
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-layer-group text-moodle-blue"></i> Total Pertemuan: <strong id="total-sections-count">0</strong></span>
+                    </div>
+                </div>
+
+                <!-- Admin Action Switch & Settings -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div id="edit-mode-container" class="hidden bg-slate-100 p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+                        <div class="text-xs">
+                            <div class="font-bold text-slate-800">Mode Edit Aktivitas</div>
+                            <div class="text-slate-500 text-[11px]">Ubah & Atur Konten</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="edit-mode-toggle" class="sr-only peer" onchange="toggleEditMode()">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-moodle-blue"></div>
+                        </label>
+                    </div>
+
+                    <button id="edit-course-info-btn" onclick="openCourseInfoModal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition border border-slate-300 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Info Kursus
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student Progress Bar Component -->
+            <div class="mt-5 pt-4 border-t border-slate-100">
+                <div class="flex justify-between items-center text-xs text-slate-600 mb-1.5">
+                    <span class="font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-moodle-blue"></i> Kemajuan Pembelajaran Siswa
+                    </span>
+                    <span id="progress-text" class="font-bold text-moodle-blue">0% Selesai</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                    <div id="progress-bar-fill" class="bg-moodle-blue h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notice-banner" class="hidden mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-eye-slash text-amber-600 text-lg"></i>
+                <div>
+                    <strong>Mode Pengajar Aktif:</strong> Elemen yang disembunyikan ditampilkan dengan tanda khusus <span class="bg-amber-200 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded">Disembunyikan</span>. Siswa tidak dapat melihat elemen ini.
+                </div>
+            </div>
+            <button onclick="document.getElementById('notice-banner').classList.add('hidden')" class="text-amber-600 hover:text-amber-900 text-xs font-bold">Tutup</button>
+        </div>
+
+        <!-- Course Sections & Topics Container -->
+        <div id="sections-container" class="space-y-6">
+            <!-- Dynamically Rendered Sections -->
+        </div>
+
+        <!-- Add Section Button -->
+        <div class="mt-8 mb-12 flex justify-center">
+            <button id="add-section-btn" onclick="openAddSectionModal()" class="hidden bg-moodle-blue hover:bg-moodle-darkblue text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all flex items-center gap-2 transform active:scale-95">
+                <i class="fa-solid fa-plus-circle text-lg"></i>
+                <span>Tambah Pertemuan / Topik Baru</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-auto text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 LMS SMANKA</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Admin Login Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 transform transition-all">
+            <div class="moodle-gradient text-white p-5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-user-shield text-xl text-yellow-400"></i>
+                    <h3 class="font-bold text-lg">Autentikasi Pengajar / Admin</h3>
+                </div>
+                <button onclick="closeAdminModal()" class="text-white/80 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-500">Masukkan kredensial pengajar untuk mengaktifkan akses edit, tambah aktivitas, duplikasi, dan pengaturan visibilitas kelas.</p>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
+                    <div class="font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> Akun Demo Pengajar:</div>
+                    <div>Username: <strong class="font-mono bg-blue-100 px-1 py-0.5 rounded">admin</strong></div>
+                    <div>Password: <strong class="font-mono bg-blue-100 px-1 py-0.5 rounded">admin123</strong></div>
+                </div>
+
+                <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Username Admin</label>
+                        <input type="text" id="admin-username" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="admin">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                        <input type="password" id="admin-password" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="••••••••">
+                    </div>
+                    <div id="login-error-msg" class="hidden text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                        Username atau password salah! Silakan coba lagi.
+                    </div>
+                    <div class="pt-2 flex gap-2">
+                        <button type="button" onclick="closeAdminModal()" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">Batal</button>
+                        <button type="submit" class="w-1/2 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white text-xs font-semibold rounded-lg shadow">Masuk Pengajar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Add / Edit Section Modal -->
+    <div id="section-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="bg-slate-800 text-white p-4 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2" id="section-modal-title">
+                    <i class="fa-solid fa-folder-plus text-yellow-400"></i> Tambah Pertemuan
+                </h3>
+                <button onclick="closeSectionModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="section-form" onsubmit="saveSection(event)" class="p-6 space-y-4">
+                <input type="hidden" id="section-id-input">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Judul Pertemuan / Modul *</label>
+                    <input type="text" id="section-title-input" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Contoh: Pertemuan 1 - Konsep Dasar HTML & Web">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Singkat / Topik Pembelajaran</label>
+                    <textarea id="section-desc-input" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Penjelasan singkat tujuan atau ruang lingkup materi pada minggu/topik ini..."></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="section-visible-input" class="rounded border-slate-300 text-moodle-blue focus:ring-moodle-blue" checked>
+                    <label for="section-visible-input" class="text-xs text-slate-700 font-medium">Tampilkan ke siswa langsung</label>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeSectionModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white text-xs font-semibold rounded-lg shadow">Simpan Pertemuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Activity Picker Modal -->
+    <div id="activity-picker-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+            <div class="moodle-gradient text-white p-4 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-yellow-400"></i> Tambah Aktivitas atau Sumber Daya
+                    </h3>
+                    <p class="text-xs text-blue-200">Pilih jenis aktivitas atau materi yang ingin ditambahkan ke kelas.</p>
+                </div>
+                <button onclick="closeActivityPickerModal()" class="text-white/80 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="bg-slate-100 px-6 py-2 border-b border-slate-200 flex gap-2 text-xs font-medium">
+                <button onclick="filterActivityPicker('all')" id="tab-picker-all" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-moodle-blue font-bold">Semua</button>
+                <button onclick="filterActivityPicker('activity')" id="tab-picker-activity" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/60">Aktivitas Interaktif</button>
+                <button onclick="filterActivityPicker('resource')" id="tab-picker-resource" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/60">Sumber Daya / Materi</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="activity-types-grid">
+                <!-- Activity options injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Activity Form Modal -->
+    <div id="activity-form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="bg-slate-800 text-white p-4 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2" id="act-modal-title">
+                    <i class="fa-solid fa-pen-nib text-yellow-400"></i> Pengaturan Aktivitas
+                </h3>
+                <button onclick="closeActivityFormModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="activity-form" onsubmit="saveActivity(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="act-section-id">
+                <input type="hidden" id="act-id">
+                <input type="hidden" id="act-type">
+
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div id="act-type-icon-container" class="p-2.5 rounded-lg bg-moodle-blue text-white text-xl">
+                        <i id="act-type-icon" class="fa-solid fa-file"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 font-medium">Tipe Aktivitas Moodle</div>
+                        <div class="text-sm font-bold text-slate-800" id="act-type-label">Tugas (Assignment)</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Aktivitas / Judul Materi *</label>
+                    <input type="text" id="act-title-input" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Masukkan judul aktivitas...">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Instruksi / Deskripsi / Ringkasan</label>
+                    <textarea id="act-desc-input" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Penjelasan untuk mahasiswa..."></textarea>
+                </div>
+
+                <div id="act-extra-fields" class="space-y-3 pt-2 border-t border-slate-100">
+                    <div id="field-url" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tautan Web / External URL</label>
+                        <input type="url" id="act-url-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="https://example.com/materi">
+                    </div>
+
+                    <div id="field-date" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Batas Waktu Penyerahan / Tenggat</label>
+                        <input type="datetime-local" id="act-date-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="act-visible-input" class="rounded border-slate-300 text-moodle-blue focus:ring-moodle-blue" checked>
+                    <label for="act-visible-input" class="text-xs text-slate-700 font-medium">Tampilkan ke siswa</label>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-2 border-t border-slate-200">
+                    <button type="button" onclick="closeActivityFormModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white text-xs font-semibold rounded-lg shadow">Simpan Aktivitas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Edit Course Info Modal -->
+    <div id="course-info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="bg-slate-800 text-white p-4 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-yellow-400"></i> Pengaturan Utama Kursus
+                </h3>
+                <button onclick="closeCourseInfoModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="course-info-form" onsubmit="saveCourseInfo(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Kelas / Mata Pelajaran</label>
+                    <input type="text" id="course-info-code" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="TIF-2026">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Mata Kuliah / Kursus</label>
+                    <input type="text" id="course-info-title" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Dosen / Pengajar</label>
+                    <input type="text" id="course-info-teacher" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Singkat Kursus</label>
+                    <textarea id="course-info-desc" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-moodle-blue"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeCourseInfoModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white text-xs font-semibold rounded-lg shadow">Simpan Info</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 6: Custom Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-100 p-6 space-y-4 text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-base" id="confirm-modal-title">Konfirmasi</h3>
+                <p class="text-xs text-slate-500 mt-1" id="confirm-modal-msg">Apakah Anda yakin ingin melanjutkan?</p>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="confirm-modal-cancel" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">Batal</button>
+                <button type="button" id="confirm-modal-action" class="w-1/2 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: Activity Detail Viewer Modal -->
+    <div id="activity-detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="moodle-gradient text-white p-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div id="detail-type-icon" class="p-2 rounded-lg bg-white/20 text-yellow-300">
+                        <i class="fa-solid fa-file"></i>
+                    </div>
+                    <div>
+                        <span id="detail-type-badge" class="text-[10px] font-bold uppercase bg-white/20 px-2 py-0.5 rounded text-blue-100">Modul</span>
+                        <h3 class="font-bold text-base leading-tight" id="detail-title">Detail Aktivitas</h3>
+                    </div>
+                </div>
+                <button onclick="closeActivityDetailModal()" class="text-white/80 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Deskripsi / Instruksi</h4>
+                    <p id="detail-desc" class="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">Tidak ada instruksi khusus.</p>
+                </div>
+                <div id="detail-extra-container" class="space-y-2">
+                    <!-- Dynamic URL or Due Date details -->
+                </div>
+                <div class="pt-3 border-t border-slate-100 flex justify-end">
+                    <button onclick="closeActivityDetailModal()" class="px-5 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white text-xs font-semibold rounded-lg shadow">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 8: Firebase Cloud Configuration Modal (Auto-Cleaner Supported) -->
+    <div id="firebase-config-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="bg-slate-800 text-white p-4 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-cloud text-yellow-400"></i> Pengaturan Firebase Cloud Storage
+                </h3>
+                <button onclick="closeFirebaseConfigModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <p class="text-slate-600">
+                    Tempelkan skrip / objek konfigurasi dari Firebase Console di bawah ini. Sistem akan secara otomatis mengonversi format JavaScript menjadi JSON murni yang valid.
+                </p>
+
+                <div class="space-y-2">
+                    <label class="block font-semibold text-slate-700">Firebase Config (Paste langsung dari Console)</label>
+                    <textarea id="firebase-config-json" rows="7" class="w-full p-3 font-mono text-[11px] border border-slate-300 rounded-lg focus:ring-2 focus:ring-moodle-blue" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "my-app.firebaseapp.com",
+  "projectId": "my-app",
+  "storageBucket": "my-app.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abc"
+}'></textarea>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 space-y-1">
+                    <strong class="font-semibold flex items-center gap-1"><i class="fa-solid fa-lightbulb text-amber-500"></i> Petunjuk:</strong>
+                    <div>Anda dapat menyalin langsung teks dari Firebase Console seperti `const firebaseConfig = { ... };`. Sistem akan otomatis mendeteksi dan membersihkannya.</div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="resetFirebaseConfig()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg">Gunakan Default</button>
+                    <button type="button" onclick="saveFirebaseCustomConfig()" class="px-5 py-2 bg-moodle-blue hover:bg-moodle-darkblue text-white font-semibold rounded-lg shadow">Simpan & Hubungkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const ACTIVITY_TYPES = [
+            { id: 'assign', name: 'Tugas (Assignment)', category: 'activity', icon: 'fa-clipboard-list', color: 'bg-blue-600', desc: 'Siswa dapat mengunggah berkas atau jawaban teks.' },
+            { id: 'quiz', name: 'Kuis (Quiz)', category: 'activity', icon: 'fa-circle-question', color: 'bg-pink-600', desc: 'Ujian pilihan ganda, benar/salah, atau esai.' },
+            { id: 'forum', name: 'Forum Diskusi', category: 'activity', icon: 'fa-comments', color: 'bg-purple-600', desc: 'Wadah diskusi interaktif antar mahasiswa dan dosen.' },
+            { id: 'resource', name: 'Berkas / Materi', category: 'resource', icon: 'fa-file-pdf', color: 'bg-emerald-600', desc: 'PDF, Slides presentation, atau dokumen modul.' },
+            { id: 'url', name: 'Tautan / Link URL', category: 'resource', icon: 'fa-link', color: 'bg-amber-600', desc: 'Situs web eksternal, video YouTube, atau referensi.' },
+            { id: 'label', name: 'Label / Pengumuman', category: 'resource', icon: 'fa-note-sticky', color: 'bg-indigo-600', desc: 'Teks penjelasan langsung di halaman kelas.' },
+            { id: 'h5p', name: 'Konten Interaktif H5P', category: 'activity', icon: 'fa-puzzle-piece', color: 'bg-red-600', desc: 'Simulasi interaktif, video kuis, atau kartu memori.' },
+            { id: 'page', name: 'Halaman Materi (Page)', category: 'resource', icon: 'fa-book-open', color: 'bg-cyan-600', desc: 'Halaman artikel web dibaca di dalam LMS.' }
+        ];
+
+        window.state = {
+            isAdmin: false,
+            editMode: false,
+            currentUserId: null,
+            completedActivities: {},
+            courseInfo: {
+                code: "TIF-2026",
+                title: "Pemrograman Web Lanjut & LMS Architecture",
+                teacher: "Dr. Ir. Ahmad Subagyo, M.Kom",
+                description: "Kelas interaktif penguasaan modul web, manajemen aktivitas, dan struktur pembelajaran e-learning berbasis Moodle."
+            },
+            sections: [
+                {
+                    id: "sec_1",
+                    title: "Pertemuan 1: Pengenalan Arsitektur LMS & Moodle",
+                    description: "Memahami fondasi kelas digital, standar SCORM, serta struktur modul pembelajaran.",
+                    visible: true,
+                    activities: [
+                        {
+                            id: "act_101",
+                            type: "resource",
+                            title: "Slide Modul 01 - Pengenalan Moodle 4.x.pdf",
+                            description: "Materi presentasi perkuliahan minggu pertama.",
+                            visible: true,
+                            url: "https://moodle.org"
+                        },
+                        {
+                            id: "act_102",
+                            type: "forum",
+                            title: "Forum Perkenalan & Diskusi Awal",
+                            description: "Silakan perkenalkan diri Anda dan sebutkan pengalaman pemrograman Anda.",
+                            visible: true
+                        }
+                    ]
+                },
+                {
+                    id: "sec_2",
+                    title: "Pertemuan 2: Manajemen Aktivitas & Penilaian Interaktif",
+                    description: "Konfigurasi kuis, tenggat tugas, dan forum tanggapan otomatis.",
+                    visible: true,
+                    activities: [
+                        {
+                            id: "act_201",
+                            type: "assign",
+                            title: "Tugas Mandiri 1: Membuat Struktur HTML LMS",
+                            description: "Buatlah satu halaman web statis yang menampilkan komponen Moodle.",
+                            visible: true,
+                            dueDate: "2026-08-30T23:59"
+                        },
+                        {
+                            id: "act_202",
+                            type: "quiz",
+                            title: "Kuis Diagnostik 1: Konsep Dasar Web",
+                            description: "Waktu pengerjaan 15 menit, 10 soal pilihan ganda.",
+                            visible: true,
+                            dueDate: "2026-08-25T18:00"
+                        },
+                        {
+                            id: "act_203",
+                            type: "label",
+                            title: "⚠️ Catatan Penting Tenggat Waktu",
+                            description: "Pastikan semua unggahan tugas menggunakan format PDF atau ZIP file standar.",
+                            visible: false
+                        }
+                    ]
+                }
+            ]
+        };
+
+        window.showConfirmDialog = function(title, message, onConfirm) {
+            document.getElementById('confirm-modal-title').textContent = title;
+            document.getElementById('confirm-modal-msg').textContent = message;
+            const modal = document.getElementById('confirm-modal');
+            const cancelBtn = document.getElementById('confirm-modal-cancel');
+            const actionBtn = document.getElementById('confirm-modal-action');
+
+            modal.classList.remove('hidden');
+
+            const handleCancel = () => {
+                modal.classList.add('hidden');
+                cleanup();
+            };
+
+            const handleAction = () => {
+                modal.classList.add('hidden');
+                cleanup();
+                if (onConfirm) onConfirm();
+            };
+
+            const cleanup = () => {
+                cancelBtn.removeEventListener('click', handleCancel);
+                actionBtn.removeEventListener('click', handleAction);
+            };
+
+            cancelBtn.addEventListener('click', handleCancel);
+            actionBtn.addEventListener('click', handleAction);
+        };
+
+        window.renderApp = function() {
+            // Update Course Info Headers
+            document.getElementById('course-display-code').textContent = window.state.courseInfo.code || "TIF-2026";
+            document.getElementById('course-display-title').textContent = window.state.courseInfo.title;
+            document.getElementById('course-display-desc').textContent = window.state.courseInfo.description;
+            document.getElementById('course-teacher-name').textContent = window.state.courseInfo.teacher;
+            document.getElementById('total-sections-count').textContent = window.state.sections.length;
+
+            // Admin Controls UI Update
+            const adminBtnText = document.getElementById('admin-btn-text');
+            const roleBadge = document.getElementById('user-role-badge');
+            const roleIcon = document.getElementById('role-icon');
+            const roleText = document.getElementById('role-text');
+            const editModeContainer = document.getElementById('edit-mode-container');
+            const editCourseBtn = document.getElementById('edit-course-info-btn');
+            const addSecBtn = document.getElementById('add-section-btn');
+            const noticeBanner = document.getElementById('notice-banner');
+            const editToggle = document.getElementById('edit-mode-toggle');
+
+            if (editToggle) {
+                editToggle.checked = window.state.editMode;
+            }
+
+            if (window.state.isAdmin) {
+                adminBtnText.textContent = "Keluar Pengajar";
+                roleIcon.className = "w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse";
+                roleText.textContent = "Mode Pengajar (Admin)";
+                roleBadge.className = "bg-emerald-900/80 border border-emerald-400/40 px-3 py-1 rounded-full text-xs flex items-center gap-2";
+                
+                editModeContainer.classList.remove('hidden');
+                editCourseBtn.classList.remove('hidden');
+                if (window.state.editMode) {
+                    addSecBtn.classList.remove('hidden');
+                    noticeBanner.classList.remove('hidden');
+                } else {
+                    addSecBtn.classList.add('hidden');
+                    noticeBanner.classList.add('hidden');
+                }
+            } else {
+                adminBtnText.textContent = "Login Pengajar";
+                roleIcon.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+                roleText.textContent = "Mode Siswa";
+                roleBadge.className = "bg-blue-900/60 border border-blue-400/30 px-3 py-1 rounded-full text-xs flex items-center gap-2";
+                
+                editModeContainer.classList.add('hidden');
+                editCourseBtn.classList.add('hidden');
+                addSecBtn.classList.add('hidden');
+                noticeBanner.classList.add('hidden');
+            }
+
+            let totalActivitiesCount = 0;
+            let completedCount = 0;
+
+            window.state.sections.forEach(sec => {
+                sec.activities.forEach(act => {
+                    if (window.state.isAdmin || act.visible) {
+                        totalActivitiesCount++;
+                        if (window.state.completedActivities[act.id]) {
+                            completedCount++;
+                        }
+                    }
+                });
+            });
+
+            const percent = totalActivitiesCount > 0 ? Math.round((completedCount / totalActivitiesCount) * 100) : 0;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+            document.getElementById('progress-text').textContent = `${percent}% Selesai (${completedCount}/${totalActivitiesCount})`;
+
+            const container = document.getElementById('sections-container');
+            container.innerHTML = '';
+
+            window.state.sections.forEach((section, sIndex) => {
+                if (!window.state.isAdmin && !section.visible) return;
+
+                const isHiddenStyle = !section.visible ? 'section-hidden border-dashed border-amber-300' : 'bg-white border-slate-200';
+
+                const sectionEl = document.createElement('div');
+                sectionEl.className = `rounded-xl border shadow-sm transition-all overflow-hidden ${isHiddenStyle}`;
+
+                let sectionHeaderHTML = `
+                    <div class="p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                            <span class="bg-moodle-blue text-white w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                ${sIndex + 1}
+                            </span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-base font-bold text-slate-800">${escapeHtml(section.title)}</h2>
+                                    ${!section.visible ? '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-300"><i class="fa-solid fa-eye-slash mr-1"></i>Disembunyikan dari Siswa</span>' : ''}
+                                </div>
+                                ${section.description ? `<p class="text-xs text-slate-600 mt-1">${escapeHtml(section.description)}</p>` : ''}
+                            </div>
+                        </div>
+
+                        ${(window.state.isAdmin && window.state.editMode) ? `
+                            <div class="flex items-center gap-1 shrink-0 self-end md:self-auto bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                                <button onclick="moveSection('${section.id}', 'up')" ${sIndex === 0 ? 'disabled class="p-1.5 text-slate-300 cursor-not-allowed"' : 'class="p-1.5 hover:bg-slate-100 text-slate-600 rounded text-xs"'} title="Pindah Ke Atas">
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                </button>
+                                <button onclick="moveSection('${section.id}', 'down')" ${sIndex === window.state.sections.length - 1 ? 'disabled class="p-1.5 text-slate-300 cursor-not-allowed"' : 'class="p-1.5 hover:bg-slate-100 text-slate-600 rounded text-xs"'} title="Pindah Ke Bawah">
+                                    <i class="fa-solid fa-arrow-down"></i>
+                                </button>
+                                <div class="w-px h-4 bg-slate-200 mx-0.5"></div>
+                                <button onclick="toggleSectionVisibility('${section.id}')" title="${section.visible ? 'Sembunyikan dari siswa' : 'Tampilkan ke siswa'}" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded text-xs">
+                                    <i class="fa-solid ${section.visible ? 'fa-eye text-green-600' : 'fa-eye-slash text-amber-600'}"></i>
+                                </button>
+                                <button onclick="openEditSectionModal('${section.id}')" title="Edit Pertemuan" class="p-1.5 hover:bg-slate-100 text-slate-600 rounded text-xs">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="duplicateSection('${section.id}')" title="Duplikat Pertemuan" class="p-1.5 hover:bg-slate-100 text-moodle-blue rounded text-xs">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                                <button onclick="deleteSection('${section.id}')" title="Hapus Pertemuan" class="p-1.5 hover:bg-red-50 text-red-600 rounded text-xs">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                let activitiesHTML = '<div class="p-4 space-y-3">';
+                const visibleActivities = section.activities.filter(a => window.state.isAdmin || a.visible);
+
+                if (visibleActivities.length === 0) {
+                    activitiesHTML += `
+                        <div class="py-6 text-center text-xs text-slate-400 italic bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                            Belum ada aktivitas atau materi pada pertemuan ini.
+                        </div>
+                    `;
+                } else {
+                    visibleActivities.forEach((act, aIndex) => {
+                        const typeInfo = ACTIVITY_TYPES.find(t => t.id === act.type) || ACTIVITY_TYPES[0];
+                        const isActHiddenStyle = !act.visible ? 'opacity-60 bg-amber-50/50 border-dashed border-amber-300' : 'bg-white border-slate-200';
+                        const isDone = !!window.state.completedActivities[act.id];
+
+                        activitiesHTML += `
+                            <div class="activity-card p-3 rounded-lg border flex items-center justify-between gap-3 ${isActHiddenStyle}">
+                                <div class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onclick="openActivityDetailModal('${section.id}', '${act.id}')">
+                                    <div class="${typeInfo.color} text-white p-2.5 rounded-lg text-sm shrink-0 shadow-sm">
+                                        <i class="fa-solid ${typeInfo.icon}"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-semibold text-sm text-slate-800 hover:text-moodle-blue transition truncate">${escapeHtml(act.title)}</span>
+                                            ${!act.visible ? '<span class="bg-amber-200 text-amber-900 text-[9px] font-bold px-1.5 py-0.2 rounded">Sembunyi</span>' : ''}
+                                        </div>
+                                        ${act.description ? `<p class="text-xs text-slate-500 truncate mt-0.5">${escapeHtml(act.description)}</p>` : ''}
+                                        ${act.dueDate ? `<div class="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1"><i class="fa-regular fa-clock"></i> Tenggat: ${new Date(act.dueDate).toLocaleString('id-ID')}</div>` : ''}
+                                        ${act.url ? `<div class="text-[11px] text-moodle-blue mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Buka Tautan Eksternal</div>` : ''}
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    ${(window.state.isAdmin && window.state.editMode) ? `
+                                        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded border border-slate-200">
+                                            <button onclick="moveActivity('${section.id}', '${act.id}', 'up')" ${aIndex === 0 ? 'disabled class="p-1 text-slate-300 cursor-not-allowed"' : 'class="p-1 hover:bg-slate-200 text-slate-600 rounded text-xs"'} title="Ke Atas">
+                                                <i class="fa-solid fa-chevron-up"></i>
+                                            </button>
+                                            <button onclick="moveActivity('${section.id}', '${act.id}', 'down')" ${aIndex === visibleActivities.length - 1 ? 'disabled class="p-1 text-slate-300 cursor-not-allowed"' : 'class="p-1 hover:bg-slate-200 text-slate-600 rounded text-xs"'} title="Ke Bawah">
+                                                <i class="fa-solid fa-chevron-down"></i>
+                                            </button>
+                                            <div class="w-px h-3 bg-slate-200 mx-0.5"></div>
+                                            <button onclick="toggleActivityVisibility('${section.id}', '${act.id}')" title="Sembunyikan / Tampilkan" class="p-1 hover:bg-slate-200 text-slate-600 rounded text-xs">
+                                                <i class="fa-solid ${act.visible ? 'fa-eye text-green-600' : 'fa-eye-slash text-amber-600'}"></i>
+                                            </button>
+                                            <button onclick="openEditActivityModal('${section.id}', '${act.id}')" title="Edit Aktivitas" class="p-1 hover:bg-slate-200 text-slate-600 rounded text-xs">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            <button onclick="duplicateActivity('${section.id}', '${act.id}')" title="Duplikat Aktivitas" class="p-1 hover:bg-slate-200 text-moodle-blue rounded text-xs">
+                                                <i class="fa-solid fa-copy"></i>
+                                            </button>
+                                            <button onclick="deleteActivity('${section.id}', '${act.id}')" title="Hapus Aktivitas" class="p-1 hover:bg-red-100 text-red-600 rounded text-xs">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                    ` : `
+                                        <label class="flex items-center gap-1.5 text-xs ${isDone ? 'bg-green-50 text-green-700 border-green-200 font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} border px-2.5 py-1 rounded-full transition cursor-pointer">
+                                            <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleActivityCompletion('${act.id}')" class="rounded text-green-600 focus:ring-green-500">
+                                            <span>${isDone ? 'Selesai' : 'Tandai Selesai'}</span>
+                                        </label>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                if (window.state.isAdmin && window.state.editMode) {
+                    activitiesHTML += `
+                        <div class="pt-2">
+                            <button onclick="openActivityPickerModal('${section.id}')" class="w-full py-2.5 border-2 border-dashed border-blue-200 hover:border-moodle-blue hover:bg-blue-50/50 text-moodle-blue text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus-circle text-sm"></i>
+                                <span>Tambah Aktivitas atau Sumber Daya</span>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                activitiesHTML += '</div>';
+
+                sectionEl.innerHTML = sectionHeaderHTML + activitiesHTML;
+                container.appendChild(sectionEl);
+            });
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        window.openAdminModal = function() {
+            if (window.state.isAdmin) {
+                window.state.isAdmin = false;
+                window.state.editMode = false;
+                document.getElementById('edit-mode-toggle').checked = false;
+                window.renderApp();
+            } else {
+                document.getElementById('admin-modal').classList.remove('hidden');
+                document.getElementById('admin-username').focus();
+            }
+        };
+
+        window.closeAdminModal = function() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('login-error-msg').classList.add('hidden');
+        };
+
+        window.handleAdminLogin = function(e) {
+            e.preventDefault();
+            const u = document.getElementById('admin-username').value;
+            const p = document.getElementById('admin-password').value;
+
+            if (u === 'admin' && p === 'admin123') {
+                window.state.isAdmin = true;
+                window.state.editMode = true;
+                document.getElementById('edit-mode-toggle').checked = true;
+                closeAdminModal();
+                window.renderApp();
+            } else {
+                document.getElementById('login-error-msg').classList.remove('hidden');
+            }
+        };
+
+        window.toggleEditMode = function() {
+            window.state.editMode = document.getElementById('edit-mode-toggle').checked;
+            window.renderApp();
+        };
+
+        window.openCourseInfoModal = function() {
+            document.getElementById('course-info-code').value = window.state.courseInfo.code || "TIF-2026";
+            document.getElementById('course-info-title').value = window.state.courseInfo.title;
+            document.getElementById('course-info-teacher').value = window.state.courseInfo.teacher;
+            document.getElementById('course-info-desc').value = window.state.courseInfo.description;
+            document.getElementById('course-info-modal').classList.remove('hidden');
+        };
+
+        window.closeCourseInfoModal = function() {
+            document.getElementById('course-info-modal').classList.add('hidden');
+        };
+
+        window.saveCourseInfo = function(e) {
+            e.preventDefault();
+            window.state.courseInfo.code = document.getElementById('course-info-code').value;
+            window.state.courseInfo.title = document.getElementById('course-info-title').value;
+            window.state.courseInfo.teacher = document.getElementById('course-info-teacher').value;
+            window.state.courseInfo.description = document.getElementById('course-info-desc').value;
+            closeCourseInfoModal();
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.openAddSectionModal = function() {
+            document.getElementById('section-modal-title').innerHTML = '<i class="fa-solid fa-folder-plus text-yellow-400"></i> Tambah Pertemuan Baru';
+            document.getElementById('section-id-input').value = '';
+            document.getElementById('section-title-input').value = '';
+            document.getElementById('section-desc-input').value = '';
+            document.getElementById('section-visible-input').checked = true;
+            document.getElementById('section-modal').classList.remove('hidden');
+        };
+
+        window.openEditSectionModal = function(sectionId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (!sec) return;
+
+            document.getElementById('section-modal-title').innerHTML = '<i class="fa-solid fa-pen text-yellow-400"></i> Edit Pertemuan';
+            document.getElementById('section-id-input').value = sec.id;
+            document.getElementById('section-title-input').value = sec.title;
+            document.getElementById('section-desc-input').value = sec.description || '';
+            document.getElementById('section-visible-input').checked = sec.visible;
+            document.getElementById('section-modal').classList.remove('hidden');
+        };
+
+        window.closeSectionModal = function() {
+            document.getElementById('section-modal').classList.add('hidden');
+        };
+
+        window.saveSection = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('section-id-input').value;
+            const title = document.getElementById('section-title-input').value;
+            const desc = document.getElementById('section-desc-input').value;
+            const visible = document.getElementById('section-visible-input').checked;
+
+            if (id) {
+                const sec = window.state.sections.find(s => s.id === id);
+                if (sec) {
+                    sec.title = title;
+                    sec.description = desc;
+                    sec.visible = visible;
+                }
+            } else {
+                const newSec = {
+                    id: 'sec_' + Date.now(),
+                    title: title,
+                    description: desc,
+                    visible: visible,
+                    activities: []
+                };
+                window.state.sections.push(newSec);
+            }
+
+            closeSectionModal();
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.duplicateSection = function(sectionId) {
+            const index = window.state.sections.findIndex(s => s.id === sectionId);
+            if (index === -1) return;
+
+            const orig = window.state.sections[index];
+            const clonedActivities = orig.activities.map(act => ({
+                ...act,
+                id: 'act_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)
+            }));
+
+            const duplicatedSection = {
+                ...orig,
+                id: 'sec_' + Date.now(),
+                title: `${orig.title} (Salinan)`,
+                activities: clonedActivities
+            };
+
+            window.state.sections.splice(index + 1, 0, duplicatedSection);
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.deleteSection = function(sectionId) {
+            window.showConfirmDialog(
+                "Hapus Pertemuan",
+                "Apakah Anda yakin ingin menghapus pertemuan ini beserta seluruh aktivitas di dalamnya?",
+                () => {
+                    window.state.sections = window.state.sections.filter(s => s.id !== sectionId);
+                    window.saveToFirestore();
+                    window.renderApp();
+                }
+            );
+        };
+
+        window.toggleSectionVisibility = function(sectionId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (sec) {
+                sec.visible = !sec.visible;
+                window.saveToFirestore();
+                window.renderApp();
+            }
+        };
+
+        window.moveSection = function(sectionId, direction) {
+            const idx = window.state.sections.findIndex(s => s.id === sectionId);
+            if (idx === -1) return;
+            if (direction === 'up' && idx > 0) {
+                const temp = window.state.sections[idx];
+                window.state.sections[idx] = window.state.sections[idx - 1];
+                window.state.sections[idx - 1] = temp;
+            } else if (direction === 'down' && idx < window.state.sections.length - 1) {
+                const temp = window.state.sections[idx];
+                window.state.sections[idx] = window.state.sections[idx + 1];
+                window.state.sections[idx + 1] = temp;
+            }
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        let activeSectionIdForNewActivity = null;
+
+        window.openActivityPickerModal = function(sectionId) {
+            activeSectionIdForNewActivity = sectionId;
+            renderActivityPickerGrid('all');
+            document.getElementById('activity-picker-modal').classList.remove('hidden');
+        };
+
+        window.closeActivityPickerModal = function() {
+            document.getElementById('activity-picker-modal').classList.add('hidden');
+        };
+
+        window.filterActivityPicker = function(category) {
+            ['all', 'activity', 'resource'].forEach(cat => {
+                const btn = document.getElementById(`tab-picker-${cat}`);
+                if (cat === category) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-moodle-blue font-bold";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/60";
+                }
+            });
+            renderActivityPickerGrid(category);
+        };
+
+        function renderActivityPickerGrid(filterCategory) {
+            const grid = document.getElementById('activity-types-grid');
+            grid.innerHTML = '';
+
+            const items = filterCategory === 'all' 
+                ? ACTIVITY_TYPES 
+                : ACTIVITY_TYPES.filter(t => t.category === filterCategory);
+
+            items.forEach(type => {
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl border border-slate-200 hover:border-moodle-blue hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group bg-white";
+                card.onclick = () => selectActivityType(type.id);
+
+                card.innerHTML = `
+                    <div class="${type.color} text-white p-3 rounded-xl text-xl mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid ${type.icon}"></i>
+                    </div>
+                    <div class="font-bold text-xs text-slate-800 mb-1">${type.name}</div>
+                    <div class="text-[11px] text-slate-500 leading-tight">${type.desc}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectActivityType(typeId) {
+            closeActivityPickerModal();
+            openNewActivityForm(activeSectionIdForNewActivity, typeId);
+        }
+
+        function openNewActivityForm(sectionId, typeId) {
+            const typeInfo = ACTIVITY_TYPES.find(t => t.id === typeId) || ACTIVITY_TYPES[0];
+
+            document.getElementById('act-section-id').value = sectionId;
+            document.getElementById('act-id').value = '';
+            document.getElementById('act-type').value = typeId;
+
+            document.getElementById('act-modal-title').innerHTML = `<i class="fa-solid fa-plus text-yellow-400"></i> Tambah Aktivitas`;
+            document.getElementById('act-type-label').textContent = typeInfo.name;
+            document.getElementById('act-type-icon').className = `fa-solid ${typeInfo.icon}`;
+            document.getElementById('act-type-icon-container').className = `p-2.5 rounded-lg text-white text-xl ${typeInfo.color}`;
+
+            document.getElementById('act-title-input').value = '';
+            document.getElementById('act-desc-input').value = '';
+            document.getElementById('act-url-input').value = '';
+            document.getElementById('act-date-input').value = '';
+            document.getElementById('act-visible-input').checked = true;
+
+            toggleActivityFormFields(typeId);
+
+            document.getElementById('activity-form-modal').classList.remove('hidden');
+        }
+
+        window.openEditActivityModal = function(sectionId, actId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (!sec) return;
+            const act = sec.activities.find(a => a.id === actId);
+            if (!act) return;
+
+            const typeInfo = ACTIVITY_TYPES.find(t => t.id === act.type) || ACTIVITY_TYPES[0];
+
+            document.getElementById('act-section-id').value = sectionId;
+            document.getElementById('act-id').value = act.id;
+            document.getElementById('act-type').value = act.type;
+
+            document.getElementById('act-modal-title').innerHTML = `<i class="fa-solid fa-pen text-yellow-400"></i> Edit Aktivitas`;
+            document.getElementById('act-type-label').textContent = typeInfo.name;
+            document.getElementById('act-type-icon').className = `fa-solid ${typeInfo.icon}`;
+            document.getElementById('act-type-icon-container').className = `p-2.5 rounded-lg text-white text-xl ${typeInfo.color}`;
+
+            document.getElementById('act-title-input').value = act.title;
+            document.getElementById('act-desc-input').value = act.description || '';
+            document.getElementById('act-url-input').value = act.url || '';
+            document.getElementById('act-date-input').value = act.dueDate || '';
+            document.getElementById('act-visible-input').checked = act.visible;
+
+            toggleActivityFormFields(act.type);
+
+            document.getElementById('activity-form-modal').classList.remove('hidden');
+        };
+
+        function toggleActivityFormFields(typeId) {
+            const fieldUrl = document.getElementById('field-url');
+            const fieldDate = document.getElementById('field-date');
+
+            if (typeId === 'url' || typeId === 'resource') {
+                fieldUrl.classList.remove('hidden');
+            } else {
+                fieldUrl.classList.add('hidden');
+            }
+
+            if (typeId === 'assign' || typeId === 'quiz') {
+                fieldDate.classList.remove('hidden');
+            } else {
+                fieldDate.classList.add('hidden');
+            }
+        }
+
+        window.closeActivityFormModal = function() {
+            document.getElementById('activity-form-modal').classList.add('hidden');
+        };
+
+        window.saveActivity = function(e) {
+            e.preventDefault();
+            const secId = document.getElementById('act-section-id').value;
+            const actId = document.getElementById('act-id').value;
+            const type = document.getElementById('act-type').value;
+
+            const title = document.getElementById('act-title-input').value;
+            const desc = document.getElementById('act-desc-input').value;
+            const url = document.getElementById('act-url-input').value;
+            const dueDate = document.getElementById('act-date-input').value;
+            const visible = document.getElementById('act-visible-input').checked;
+
+            const sec = window.state.sections.find(s => s.id === secId);
+            if (!sec) return;
+
+            if (actId) {
+                const act = sec.activities.find(a => a.id === actId);
+                if (act) {
+                    act.title = title;
+                    act.description = desc;
+                    act.url = url;
+                    act.dueDate = dueDate;
+                    act.visible = visible;
+                }
+            } else {
+                const newAct = {
+                    id: 'act_' + Date.now(),
+                    type: type,
+                    title: title,
+                    description: desc,
+                    url: url,
+                    dueDate: dueDate,
+                    visible: visible
+                };
+                sec.activities.push(newAct);
+            }
+
+            closeActivityFormModal();
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.duplicateActivity = function(sectionId, actId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (!sec) return;
+
+            const index = sec.activities.findIndex(a => a.id === actId);
+            if (index === -1) return;
+
+            const orig = sec.activities[index];
+            const duplicatedAct = {
+                ...orig,
+                id: 'act_' + Date.now(),
+                title: `${orig.title} (Salinan)`
+            };
+
+            sec.activities.splice(index + 1, 0, duplicatedAct);
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.deleteActivity = function(sectionId, actId) {
+            window.showConfirmDialog(
+                "Hapus Aktivitas",
+                "Apakah Anda yakin ingin menghapus aktivitas ini?",
+                () => {
+                    const sec = window.state.sections.find(s => s.id === sectionId);
+                    if (sec) {
+                        sec.activities = sec.activities.filter(a => a.id !== actId);
+                        window.saveToFirestore();
+                        window.renderApp();
+                    }
+                }
+            );
+        };
+
+        window.toggleActivityVisibility = function(sectionId, actId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (sec) {
+                const act = sec.activities.find(a => a.id === actId);
+                if (act) {
+                    act.visible = !act.visible;
+                    window.saveToFirestore();
+                    window.renderApp();
+                }
+            }
+        };
+
+        window.moveActivity = function(sectionId, actId, direction) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (!sec) return;
+
+            const idx = sec.activities.findIndex(a => a.id === actId);
+            if (idx === -1) return;
+
+            if (direction === 'up' && idx > 0) {
+                const temp = sec.activities[idx];
+                sec.activities[idx] = sec.activities[idx - 1];
+                sec.activities[idx - 1] = temp;
+            } else if (direction === 'down' && idx < sec.activities.length - 1) {
+                const temp = sec.activities[idx];
+                sec.activities[idx] = sec.activities[idx + 1];
+                sec.activities[idx + 1] = temp;
+            }
+
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.toggleActivityCompletion = function(actId) {
+            window.state.completedActivities[actId] = !window.state.completedActivities[actId];
+            window.saveToFirestore();
+            window.renderApp();
+        };
+
+        window.openActivityDetailModal = function(sectionId, actId) {
+            const sec = window.state.sections.find(s => s.id === sectionId);
+            if (!sec) return;
+            const act = sec.activities.find(a => a.id === actId);
+            if (!act) return;
+
+            const typeInfo = ACTIVITY_TYPES.find(t => t.id === act.type) || ACTIVITY_TYPES[0];
+
+            document.getElementById('detail-type-badge').textContent = typeInfo.name;
+            document.getElementById('detail-type-icon').className = `p-2 rounded-lg text-white ${typeInfo.color}`;
+            document.getElementById('detail-type-icon').innerHTML = `<i class="fa-solid ${typeInfo.icon}"></i>`;
+            document.getElementById('detail-title').textContent = act.title;
+            document.getElementById('detail-desc').textContent = act.description || 'Tidak ada deskripsi atau instruksi khusus.';
+
+            const extraContainer = document.getElementById('detail-extra-container');
+            extraContainer.innerHTML = '';
+
+            if (act.dueDate) {
+                const d = new Date(act.dueDate).toLocaleString('id-ID');
+                extraContainer.innerHTML += `
+                    <div class="bg-red-50 text-red-800 p-3 rounded-lg border border-red-200 text-xs flex items-center gap-2 font-medium">
+                        <i class="fa-regular fa-clock text-base"></i>
+                        <span>Batas Waktu Penyerahan: <strong>${d}</strong></span>
+                    </div>
+                `;
+            }
+
+            if (act.url) {
+                extraContainer.innerHTML += `
+                    <div class="pt-2">
+                        <a href="${act.url}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 bg-moodle-blue hover:bg-moodle-darkblue text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            <span>Buka Tautan Materi / Eksternal</span>
+                        </a>
+                    </div>
+                `;
+            }
+
+            document.getElementById('activity-detail-modal').classList.remove('hidden');
+        };
+
+        window.closeActivityDetailModal = function() {
+            document.getElementById('activity-detail-modal').classList.add('hidden');
+        };
+
+        let app = null;
+        let auth = null;
+        let db = null;
+        let unsubscribeListener = null;
+
+        // Persistent fixed App ID to ensure cross-device & Google Sites iframe compatibility
+        const APP_ID = '933f4565-240d-4b6b-acde-aca6e939cf30';
+        const COURSE_DOC_PATH = ['artifacts', APP_ID, 'public', 'data', 'course_data', 'moodle_main_course'];
+
+        function getCourseDocRef() {
+            if (!db) return null;
+            return doc(db, ...COURSE_DOC_PATH);
+        }
+
+        function getStoredFirebaseConfig() {
+            let config = null;
+
+            const custom = localStorage.getItem('lmssmanka_firebase_config');
+            if (custom) {
+                try {
+                    config = JSON.parse(custom);
+                } catch(e){}
+            }
+
+            if (!config && typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    config = JSON.parse(__firebase_config);
+                } catch(e){}
+            }
+
+            if (!config) {
+                config = {
+                    projectId: "gen-lang-client-0787679479",
+                    appId: "1:517124230477:web:9d240c125f0b0868a67b04",
+                    apiKey: "AIzaSyA084_mYkiPBUm2P5Wxq5uRFmPhU7yrLaU",
+                    authDomain: "gen-lang-client-0787679479.firebaseapp.com",
+                    storageBucket: "gen-lang-client-0787679479.firebasestorage.app",
+                    messagingSenderId: "517124230477"
+                };
+            }
+
+            // Always enforce the dedicated Firestore database ID for consistent sync across devices
+            if (!config.firestoreDatabaseId || config.firestoreDatabaseId === "(default)") {
+                config.firestoreDatabaseId = "ai-studio-moodlesmanka-933f4565-240d-4b6b-acde-aca6e939cf30";
+            }
+
+            return config;
+        }
+
+        window.openFirebaseConfigModal = function() {
+            const currentCfg = getStoredFirebaseConfig();
+            document.getElementById('firebase-config-json').value = JSON.stringify(currentCfg, null, 2);
+            document.getElementById('firebase-config-modal').classList.remove('hidden');
+        };
+
+        window.closeFirebaseConfigModal = function() {
+            document.getElementById('firebase-config-modal').classList.add('hidden');
+        };
+
+        function parseFirebaseConfigText(rawText) {
+            if (!rawText) return null;
+
+            // 1. Remove JS single-line and multi-line comments
+            let clean = rawText.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').trim();
+
+            // 2. Extract object block { ... } if user pasted code snippet
+            const braceMatch = clean.match(/\{[\s\S]*\}/);
+            if (braceMatch) {
+                clean = braceMatch[0];
+            }
+
+            // 3. Try standard JSON.parse
+            try {
+                const directParsed = JSON.parse(clean);
+                if (typeof directParsed === 'object' && directParsed !== null && (directParsed.projectId || directParsed.apiKey)) {
+                    return directParsed;
+                }
+            } catch(e) {}
+
+            // 4. Resilient key-value extractor for JS objects, single quotes, unquoted keys, trailing commas
+            const result = {};
+            const keys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'measurementId', 'databaseURL', 'firestoreDatabaseId'];
+
+            for (const key of keys) {
+                const regex = new RegExp(`['"]?${key}['"]?\\s*:\\s*(?:"([^"]*)"|'([^']*)'|\`([^\`]*)\`|([a-zA-Z0-9_\\.-]+))`, 'i');
+                const m = clean.match(regex);
+                if (m) {
+                    result[key] = m[1] || m[2] || m[3] || m[4] || "";
+                }
+            }
+
+            if (result.projectId || result.apiKey) {
+                return result;
+            }
+
+            return null;
+        }
+
+        window.saveFirebaseCustomConfig = function() {
+            let raw = document.getElementById('firebase-config-json').value.trim();
+
+            if (!raw) {
+                window.showConfirmDialog("Kotak Kosong", "Silakan menempelkan konfigurasi Firebase terlebih dahulu.", ()=>{});
+                return;
+            }
+
+            const parsed = parseFirebaseConfigText(raw);
+
+            if (parsed && (parsed.projectId || parsed.apiKey)) {
+                localStorage.setItem('lmssmanka_firebase_config', JSON.stringify(parsed));
+                closeFirebaseConfigModal();
+                initFirebaseSystem();
+            } else {
+                window.showConfirmDialog(
+                    "Format JSON / JS Konfigurasi Salah", 
+                    "Sistem gagal membaca konfigurasi. Pastikan Anda menyalin seluruh skrip firebaseConfig dari Firebase Console.", 
+                    ()=>{}
+                );
+            }
+        };
+
+        window.resetFirebaseConfig = function() {
+            localStorage.removeItem('lmssmanka_firebase_config');
+            closeFirebaseConfigModal();
+            initFirebaseSystem();
+        };
+
+        window.saveToFirestore = async function() {
+            const syncIcon = document.getElementById('sync-icon');
+            const syncText = document.getElementById('sync-text');
+
+            if (syncIcon && syncText) {
+                syncIcon.className = "fa-solid fa-arrows-rotate animate-spin text-yellow-400";
+                syncText.textContent = "Menyimpan...";
+            }
+
+            const payload = {
+                courseInfo: window.state.courseInfo,
+                sections: window.state.sections,
+                completedActivities: window.state.completedActivities,
+                updatedAt: new Date().toISOString()
+            };
+
+            // Keep local backup cache updated
+            try {
+                localStorage.setItem('lmssmanka_course_backup', JSON.stringify(payload));
+            } catch(e){}
+
+            try {
+                if (auth && !auth.currentUser) {
+                    try {
+                        await signInAnonymously(auth);
+                    } catch(aErr) {
+                        console.warn("Anon Auth Retry Warning:", aErr);
+                    }
+                }
+
+                const docRef = getCourseDocRef();
+                if (docRef && auth?.currentUser) {
+                    await setDoc(docRef, payload, { merge: true });
+                    if (syncIcon && syncText) {
+                        syncIcon.className = "fa-solid fa-cloud-check text-green-400";
+                        syncText.textContent = "Tersinkron Cloud";
+                    }
+                } else {
+                    if (syncIcon && syncText) {
+                        syncIcon.className = "fa-solid fa-floppy-disk text-blue-300";
+                        syncText.textContent = "Simpan Lokal";
+                    }
+                }
+            } catch (err) {
+                console.warn("Firestore Save Warning:", err);
+                if (syncIcon && syncText) {
+                    syncIcon.className = "fa-solid fa-floppy-disk text-amber-300";
+                    syncText.textContent = "Simpan Lokal";
+                }
+            }
+        };
+
+        async function initFirebaseSystem() {
+            const syncIcon = document.getElementById('sync-icon');
+            const syncText = document.getElementById('sync-text');
+
+            if (unsubscribeListener) {
+                unsubscribeListener();
+                unsubscribeListener = null;
+            }
+
+            const activeConfig = getStoredFirebaseConfig();
+
+            try {
+                if (getApps().length > 0) {
+                    for (const existingApp of getApps()) {
+                        await deleteApp(existingApp);
+                    }
+                }
+
+                app = initializeApp(activeConfig);
+                auth = getAuth(app);
+                db = (activeConfig.firestoreDatabaseId && activeConfig.firestoreDatabaseId !== "(default)")
+                    ? getFirestore(app, activeConfig.firestoreDatabaseId)
+                    : getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                window.state.currentUserId = auth.currentUser?.uid || 'anon-user';
+
+                const docRef = getCourseDocRef();
+                if (docRef) {
+                    unsubscribeListener = onSnapshot(docRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            const data = snapshot.data();
+                            if (data.courseInfo) window.state.courseInfo = data.courseInfo;
+                            if (data.sections) window.state.sections = data.sections;
+                            if (data.completedActivities) window.state.completedActivities = data.completedActivities;
+                            if (data.updatedAt) {
+                                const dateStr = new Date(data.updatedAt).toLocaleTimeString('id-ID');
+                                document.getElementById('last-updated-tag').textContent = `Diperbarui: ${dateStr}`;
+                            }
+                            try {
+                                localStorage.setItem('lmssmanka_course_backup', JSON.stringify({
+                                    courseInfo: window.state.courseInfo,
+                                    sections: window.state.sections,
+                                    completedActivities: window.state.completedActivities,
+                                    updatedAt: data.updatedAt || new Date().toISOString()
+                                }));
+                            } catch(e){}
+                        } else {
+                            // Check local backup cache before initializing document
+                            const cached = localStorage.getItem('lmssmanka_course_backup');
+                            if (cached) {
+                                try {
+                                    const cData = JSON.parse(cached);
+                                    if (cData.courseInfo) window.state.courseInfo = cData.courseInfo;
+                                    if (cData.sections) window.state.sections = cData.sections;
+                                    if (cData.completedActivities) window.state.completedActivities = cData.completedActivities;
+                                } catch(e){}
+                            }
+                            window.saveToFirestore();
+                        }
+                        window.renderApp();
+                        if (syncIcon && syncText) {
+                            syncIcon.className = "fa-solid fa-cloud-check text-green-400";
+                            syncText.textContent = "Tersinkron Cloud";
+                        }
+                    }, (error) => {
+                        console.warn("Firestore Listener Warning:", error);
+                        loadFromLocalStorageFallback();
+                    });
+                } else {
+                    loadFromLocalStorageFallback();
+                }
+
+            } catch (error) {
+                console.warn("Firebase Init Fallback Mode:", error);
+                loadFromLocalStorageFallback();
+            }
+        }
+
+        function loadFromLocalStorageFallback() {
+            const syncIcon = document.getElementById('sync-icon');
+            const syncText = document.getElementById('sync-text');
+            const cached = localStorage.getItem('lmssmanka_course_backup');
+
+            if (cached) {
+                try {
+                    const data = JSON.parse(cached);
+                    if (data.courseInfo) window.state.courseInfo = data.courseInfo;
+                    if (data.sections) window.state.sections = data.sections;
+                    if (data.completedActivities) window.state.completedActivities = data.completedActivities;
+                } catch(e){}
+            }
+
+            if (syncIcon && syncText) {
+                syncIcon.className = "fa-solid fa-floppy-disk text-blue-300";
+                syncText.textContent = "Simpan Lokal";
+            }
+            window.renderApp();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebaseSystem();
+        });
+    </script>
+</body>
+</html>
+```e-o-f

@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "artifacts/{appId}/public/data/course_data/{docId}": {
+      "title": "Course Data",
+      "description": "Course settings, sections, activities, and completed status",
+      "type": "object",
+      "properties": {
+        "courseInfo": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string" },
+            "title": { "type": "string" },
+            "teacher": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
+        "sections": {
+          "type": "array"
+        },
+        "completedActivities": {
+          "type": "object"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

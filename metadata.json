@@ -1,0 +1,8 @@
+{
+  "name": "LMS SMANKA",
+  "description": "LMS SMANKA - Virtual Class Management System based on Moodle architecture",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
